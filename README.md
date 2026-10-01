@@ -16,6 +16,8 @@ ReEdited currently adds a configurable local build setup, C# 13 compatibility fo
 
 The asset browser opens in `Assets/ReEdited/`, with alphabetically sorted folders for enemies, decorations, interactive objects, doors, obstacles, sandbox objects, effects, and special rooms. Empty categories are hidden. `Recommended` keeps the original editor's curated selection. Use the existing parent-folder button to return to `Assets/` and browse the original asset folders.
 
+The first tile, **Search all assets...**, searches names throughout the catalog, ignoring case. Results keep their original spawn keys and appear alphabetically without duplicates. Up to 100 results are displayed; narrow the query if more match. Clear the text or use the parent-folder button to return to your previous folder. Camera movement and editing shortcuts are blocked while typing in the search field.
+
 Categories collect existing game assets; they do not add new models or guarantee that every prefab works independently in a custom level. Asset keys used for placement and saving remain unchanged. The category logic is tested, but the in-game layout and placement workflow still require verification.
 
 The inherited editor is unfinished. Save compatibility and complete property persistence still need work, so keep backups of levels when testing development builds. The inherited community level browser uses the original project's online services; their availability has not been verified.
@@ -26,15 +28,13 @@ These are development goals. Scope and implementation may change as the underlyi
 
 | Stage | Planned work |
 | --- | --- |
-| Building tools and content | Build on the categorized browser with search, favorites, grid snapping, improved duplication, and more objects, enemies, and events. |
+| Building tools and content | Build on the categorized browser and search with favorites, grid snapping, improved duplication, and more objects, enemies, and events. |
 | Script editor | In-game editing, event templates, object references, compilation, and an error console. C# is the initial language proposal. |
 | OBJ and FBX import | Import models with scale and rotation controls, materials, textures, and optional collision generation. Start with OBJ, then validate a runtime FBX importer. |
 | Lightweight model editor | Create and edit primitives, vertices, edges, and faces; add extrusion, cuts, joining, materials, and undo/redo. |
 | Animation editor | After modeling: a timeline, transform keyframes, curves, loops, and playback triggered by events or scripts. Bones, rigging, and character animation come later. |
 
 Models, textures, scripts, and animations should travel with the level rather than depend on files elsewhere on the creator's computer. Saving and reopening levels reliably is part of every stage.
-
-See [CONTINUATION.md](CONTINUATION.md) for the detailed development plan and technical findings.
 
 ## Build from source
 

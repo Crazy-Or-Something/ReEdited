@@ -10,6 +10,14 @@ public static class AssetCatalog
 {
     public const string Root = "Assets/ReEdited/";
 
+    public static List<string> Search(IEnumerable<string> keys, string query)
+    {
+        query = query?.Trim() ?? "";
+        if (query.Length == 0) return [];
+        return Sort(keys.Where(key => !string.IsNullOrWhiteSpace(key) &&
+            Path.GetFileNameWithoutExtension(key).IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0));
+    }
+
     public static Dictionary<string, List<string>> Create(
         IEnumerable<string> discoveredKeys, IEnumerable<string> recommendedKeys)
     {

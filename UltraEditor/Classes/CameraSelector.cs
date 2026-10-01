@@ -182,6 +182,11 @@ public class CameraSelector : MonoBehaviour
 
     public void Update()
     {
+        if (AssetsWindowManager.IsSearchFocused)
+        {
+            ClearHover();
+            return;
+        }
         if (Input.GetKeyDown(Plugin.selectCursorKey)) selectionMode = SelectionMode.Cursor;
 
         if (Input.GetKeyDown(Plugin.selectMoveKey)) selectionMode = SelectionMode.Move;

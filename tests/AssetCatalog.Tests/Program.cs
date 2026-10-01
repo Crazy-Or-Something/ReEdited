@@ -19,6 +19,14 @@ Assert(!folders.ContainsKey(AssetCatalog.Root + "Effects/"), "Empty categories a
 Assert(AssetCatalog.Create([], ["", " "]).Count == 2, "Empty catalogs still have a root and recommendations.");
 Assert(discovered.Length == 5 && recommended.Length == 5, "Source arrays are not changed.");
 Console.WriteLine("All asset catalog checks passed.");
+Assert(AssetCatalog.Search(discovered.Concat(recommended), "  ZOMBIE  ").SequenceEqual(new[] { zombie }),
+    "Search ignores case and surrounding whitespace and removes duplicate keys.");
+Assert(AssetCatalog.Search(discovered, "drone").Single() == drone, "Search finds assets in nested folders.");
+Assert(AssetCatalog.Search(discovered, "Enemies").Count == 0, "Search matches names rather than directory names.");
+Assert(AssetCatalog.Search(recommended, "altar").Single() == "AltarBlueOff", "Search preserves special spawn aliases.");
+Assert(AssetCatalog.Search(discovered, "missing").Count == 0, "Missing names produce no results.");
+Assert(AssetCatalog.Search(discovered, " ").Count == 0, "Blank input leaves search mode.");
+Console.WriteLine("All asset search checks passed.");
 
 static void Assert(bool condition, string message)
 {

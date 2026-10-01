@@ -35,6 +35,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isToggleEnabledKeyPressed()
     {
+        if (AssetsWindowManager.IsSearchFocused) return false;
         if (Input.GetKey(altKey) && Input.GetKey(shiftKey) && Input.GetKeyDown(KeyCode.A))
         {
             return true;
@@ -44,6 +45,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isDuplicateKeyPressed()
     {
+        if (AssetsWindowManager.IsSearchFocused) return false;
         if (Input.GetKey(ctrlKey) && Input.GetKeyDown(KeyCode.D))
         {
             return true;
@@ -53,6 +55,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isSelectPressed()
     {
+        if (AssetsWindowManager.IsSearchFocused) return false;
         if (Input.GetKey(altKey) && Input.GetKeyDown(KeyCode.S))
         {
             return true;
@@ -62,7 +65,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool canMove()
     {
-        return !Input.GetKey(ctrlKey) && !Input.GetKey(altKey);
+        return !AssetsWindowManager.IsSearchFocused && !Input.GetKey(ctrlKey) && !Input.GetKey(altKey);
     }
 
     public void Awake()

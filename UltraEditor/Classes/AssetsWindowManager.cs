@@ -28,6 +28,16 @@ public class AssetsWindowManager : MonoBehaviour
     [HideInInspector]
     public string CurrentFolder;
 
+    const int SearchResultLimit = 100;
+    const float SearchDelay = 0.15f;
+    TMP_InputField searchInput;
+    string searchQuery = "";
+    List<string> searchKeys = [];
+    bool searchPending;
+    float refreshAt;
+    public static bool IsSearchFocused => Instance != null && Instance.searchInput != null &&
+        Instance.searchInput.gameObject.activeInHierarchy && Instance.searchInput.isFocused;
+
     /// <summary> Assign the Instance. </summary>
     public void Awake() =>
         Instance = this;
@@ -36,12 +46,86 @@ public class AssetsWindowManager : MonoBehaviour
     public void Start()
     {
         CurrentFolder = AssetCatalog.Root;
+        searchKeys = Folders.Values.SelectMany(keys => keys).Distinct(StringComparer.Ordinal).ToList();
+        CreateSearchInput();
         Refresh();
+    }
+
+    void CreateSearchInput()
+    {
+        GameObject control = new("AssetSearch", typeof(RectTransform), typeof(Image));
+        control.transform.SetParent(transform, false);
+        control.transform.SetSiblingIndex(2);
+        ((RectTransform)control.transform).sizeDelta = ((RectTransform)FolderTemplate.transform).sizeDelta;
+        control.GetComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f, 1f);
+
+        GameObject viewport = new("Viewport", typeof(RectTransform), typeof(RectMask2D));
+        viewport.transform.SetParent(control.transform, false);
+        Stretch((RectTransform)viewport.transform, 8f);
+        TextMeshProUGUI text = MakeText("Text", viewport.transform);
+        TextMeshProUGUI placeholder = MakeText("Placeholder", viewport.transform);
+        placeholder.text = "Search all assets...";
+        placeholder.color = Color.gray;
+
+        searchInput = control.AddComponent<TMP_InputField>();
+        searchInput.targetGraphic = control.GetComponent<Image>();
+        searchInput.textViewport = (RectTransform)viewport.transform;
+        searchInput.textComponent = text;
+        searchInput.placeholder = placeholder;
+        searchInput.lineType = TMP_InputField.LineType.SingleLine;
+        searchInput.characterLimit = 80;
+        searchInput.onValueChanged.AddListener(value =>
+        {
+            searchQuery = value.Trim();
+            searchPending = true;
+            refreshAt = Time.unscaledTime + SearchDelay;
+        });
+    }
+
+    TextMeshProUGUI MakeText(string name, Transform parent)
+    {
+        GameObject obj = new(name, typeof(RectTransform));
+        obj.transform.SetParent(parent, false);
+        Stretch((RectTransform)obj.transform, 0f);
+        var text = obj.AddComponent<TextMeshProUGUI>();
+        text.font = FolderTemplate.folderNameText.font;
+        text.fontSize = FolderTemplate.folderNameText.fontSize;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.richText = false;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    static void Stretch(RectTransform rect, float margin)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(margin, margin);
+        rect.offsetMax = new Vector2(-margin, -margin);
+    }
+
+    void Update()
+    {
+        if (searchPending && Time.unscaledTime >= refreshAt)
+        {
+            searchPending = false;
+            Refresh();
+        }
     }
 
     /// <summary> Goes back to the previous folder in the path. </summary>
     public void PreviousFolder()
     {
+        if (searchQuery.Length > 0 || searchPending)
+        {
+            searchQuery = "";
+            searchPending = false;
+            searchInput.SetTextWithoutNotify("");
+            searchInput.DeactivateInputField();
+            Refresh();
+            return;
+        }
         int end = CurrentFolder[..^1].LastIndexOf('/') + 1;
         if (end == 0) return;
 
@@ -55,16 +139,26 @@ public class AssetsWindowManager : MonoBehaviour
         if (!Folders.TryGetValue(CurrentFolder, out List<string> keys))
             return;
 
+        bool searching = searchQuery.Length > 0;
+        int resultCount = 0;
+        if (searching)
+        {
+            keys = AssetCatalog.Search(searchKeys, searchQuery);
+            resultCount = keys.Count;
+            keys = keys.Take(SearchResultLimit).ToList();
+        }
+
         // delete children
         for (int i = 2; i < transform.childCount; i++)
         {
+            if (searchInput != null && transform.GetChild(i) == searchInput.transform) continue;
             transform.GetChild(i).gameObject.SetActive(false);
             Destroy(transform.GetChild(i).gameObject);
         }
 
         // load folders in this current folder
         foreach (string folder in Folders.Keys
-            .Where(key => key.StartsWith(CurrentFolder, StringComparison.Ordinal) && key[CurrentFolder.Length..].Occurrences('/') == 1)
+            .Where(key => !searching && key.StartsWith(CurrentFolder, StringComparison.Ordinal) && key[CurrentFolder.Length..].Occurrences('/') == 1)
             .OrderBy(key => key, StringComparer.OrdinalIgnoreCase))
         {
             AssetFolder newAssetFolder = Instantiate(FolderTemplate, transform);
@@ -89,7 +183,10 @@ public class AssetsWindowManager : MonoBehaviour
             newAssetItem.gameObject.SetActive(true);
         }
 
-        AssetsFolderPathText.text = CurrentFolder;
+        AssetsFolderPathText.text = searching
+            ? resultCount == 0 ? "No assets found. Back to clear search."
+                : $"Search: {keys.Count} of {resultCount} results. Back to clear."
+            : CurrentFolder;
 
         StartCoroutine(transform.parent.Find("Scrollbar").GetComponent<ResetScrollbar>().Reset());
     }

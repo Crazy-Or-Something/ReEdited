@@ -86,7 +86,7 @@ public class EditorManager : MonoBehaviour
             cameraSelector.ClearHover();
         }
 
-        if (Input.GetKeyDown(Plugin.deleteObjectKey) && editorCanvas.activeSelf)
+        if (!AssetsWindowManager.IsSearchFocused && Input.GetKeyDown(Plugin.deleteObjectKey) && editorCanvas.activeSelf)
         {
             if (Input.GetKey(Plugin.ctrlKey) && Input.GetKey(Plugin.shiftKey) && friendlyAdvancedInspector)
                 DeleteScene(true);
@@ -100,7 +100,7 @@ public class EditorManager : MonoBehaviour
         if (Plugin.isDuplicateKeyPressed() && IsObjectEditable() && editorCanvas.activeSelf)
             duplicateObject();
 
-        if (Input.GetKey(Plugin.createCubeKey) && editorCanvas.activeSelf)
+        if (!AssetsWindowManager.IsSearchFocused && Input.GetKey(Plugin.createCubeKey) && editorCanvas.activeSelf)
         {
             createCube(true, false);
         }
