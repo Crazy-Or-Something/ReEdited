@@ -7,7 +7,7 @@
 		<Description>WIP in-game level editor for ultrakill</Description>
 		<Version>0.0.8</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<LangVersion>latest</LangVersion>
+		<LangVersion>13.0</LangVersion>
 		<NoWarn>CS0649, CS0414</NoWarn>
 		<DebugType>embedded</DebugType>
 
@@ -61,7 +61,11 @@
 		</Reference>
 	</ItemGroup>
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	<Target Name="ValidateGamePath" BeforeTargets="ResolveAssemblyReferences">
+		<Error Condition="!Exists('$(ManagedPath)\Assembly-CSharp.dll')" Text="ULTRAKILL DLLs not found. Set ULTRAKILLPath in UltraEditor/Paths.local.props or pass -p:ULTRAKILLPath=your-game-folder." />
+	</Target>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(DeployToGame)' == 'true'">
 		<Message Text="Copying DLL to: $(CopyPath)..." Importance="high" />
 		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(CopyPath)" OverwriteReadOnlyFiles="true" />
 	</Target>

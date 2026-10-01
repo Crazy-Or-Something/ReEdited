@@ -4,6 +4,7 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # User-specific files
+Paths.local.props
 *.rsuser
 *.suo
 *.user
@@ -12,6 +13,9 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+
+#just an MD to help me make it
+CONTINUATION.md
 
 # Mono auto generated files
 mono_crash.*

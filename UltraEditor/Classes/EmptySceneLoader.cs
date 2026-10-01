@@ -179,7 +179,8 @@ public class EmptySceneLoader : MonoBehaviour
             ShopZone[] sz = FindObjectsOfType<ShopZone>(true);
             foreach (var s in sz)
             {
-                s.tipOfTheDay?.text = StockMapInfo.Instance.tipOfTheDay.tip;
+                if (s.tipOfTheDay != null)
+                    s.tipOfTheDay.text = StockMapInfo.Instance.tipOfTheDay.tip;
             }
             StockMapInfo.Instance.assets.LargeText = StockMapInfo.Instance.levelName.ToUpper();
             LevelNamePopup.Instance.Invoke("Start", 0);

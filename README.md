@@ -1,20 +1,109 @@
-Check the [thunderstore](https://new.thunderstore.io/c/ultrakill/p/duviz/UltraEditor/)
-# UltraEditor (W.I.P.)
-UltraEditor is a mod for ULTRAKILL that adds an in-game level editor, letting users modify existing levels and create entirely new ones (or at least that's the idea)
+# ReEdited
 
-If you're interested in a guide on how to use the mod, check the official [documentation](https://duviz.xyz/ultraeditor/docs)
+**Build your own corner of Hell.**
 
-This mod aims to be user-friendly, even if it means adding limitations just so casual players understand what's going on, leaving the "heavy" work for in-Unity level editors like [Vanity Reprised by EternalUnion](https://github.com/eternalUnion/VanityReprised/releases)
+ReEdited is a community continuation of [UltraEditor](https://github.com/2duviz2/UltraEditor), an in-game level editor and custom level loader for **ULTRAKILL**.
 
-To-Do 📌:
-* Saving system that saves every property
-* More array types
-* More variable types
+The goal is to make creating levels more flexible and approachable: better building tools, more objects and events, scripting, and support for imported models. Longer term, ReEdited aims to bring lightweight modeling and animation tools directly into the editor.
 
-Ideas 💡:
-* In-game script compiling
+> **Early development:** the current work establishes a buildable foundation for the continuation. A Release build has been verified against a local Steam installation, but in-game testing of this branch is still pending. The roadmap below describes planned features, not features already available.
 
-Notes 🗒️:
-* I'm really bad at making projects public, if you see a lot of references in the project, that's because this mod is a branch from another mod
-* This editor is NOT FINISHED, that means that a lot of things are broken or don't work as intended.
-* Saving is in a work in progress state, savings may break between versions! Any version that changes the letter (v0.0.0a) will mean that the saving has been changed drastically and old levels may not work.
+## The starting point
+
+UltraEditor provides the foundation: an in-game editor, object placement and inspection, game prefab browsing, custom level saving/loading, and gameplay components such as triggers, moving platforms, lights, and music.
+
+ReEdited currently adds a configurable local build setup and C# 13 compatibility for the .NET 9 SDK. The compiled DLL and plugin identity still use the original UltraEditor names.
+
+The inherited editor is unfinished. Save compatibility and complete property persistence still need work, so keep backups of levels when testing development builds. The inherited community level browser uses the original project's online services; their availability has not been verified.
+
+## Roadmap
+
+These are development goals. Scope and implementation may change as the underlying systems are tested.
+
+| Stage | Planned work |
+| --- | --- |
+| Building tools and content | Better object browsing, search and categories, favorites, grid snapping, improved duplication, and more objects, enemies, and events. |
+| Script editor | In-game editing, event templates, object references, compilation, and an error console. C# is the initial language proposal. |
+| OBJ and FBX import | Import models with scale and rotation controls, materials, textures, and optional collision generation. Start with OBJ, then validate a runtime FBX importer. |
+| Lightweight model editor | Create and edit primitives, vertices, edges, and faces; add extrusion, cuts, joining, materials, and undo/redo. |
+| Animation editor | After modeling: a timeline, transform keyframes, curves, loops, and playback triggered by events or scripts. Bones, rigging, and character animation come later. |
+
+Models, textures, scripts, and animations should travel with the level rather than depend on files elsewhere on the creator's computer. Saving and reopening levels reliably is part of every stage.
+
+See [CONTINUATION.md](CONTINUATION.md) for the detailed development plan and technical findings.
+
+## Build from source
+
+### Requirements
+
+- The **.NET 9 SDK** for the current C# 13 source.
+- An installed copy of **ULTRAKILL**, including `ULTRAKILL_Data/Managed`.
+- Access to the NuGet feeds configured in the project to restore its existing dependencies.
+- **BepInEx 5** installed in the game to run the resulting mod. The project references BepInEx 5.4.21.
+
+### Setup
+
+1. Clone this repository and enter its directory:
+
+   ```powershell
+   git clone https://github.com/Mystic-Red/ReEdited.git
+   cd ReEdited
+   ```
+
+2. Create your local path configuration:
+
+   ```powershell
+   Copy-Item UltraEditor/Paths.local.props.example UltraEditor/Paths.local.props
+   ```
+
+3. Edit `UltraEditor/Paths.local.props` and set `ULTRAKILLPath` to your game's root folder, the one containing `ULTRAKILL.exe`:
+
+   ```xml
+   <Project>
+     <PropertyGroup>
+       <ULTRAKILLPath>C:\YourSteamLibrary\steamapps\common\ULTRAKILL</ULTRAKILLPath>
+     </PropertyGroup>
+   </Project>
+   ```
+
+   Git ignores this local configuration file.
+
+4. Build:
+
+   ```powershell
+   dotnet build UltraEditor.sln -c Release
+   ```
+
+The output is `UltraEditor/bin/Release/netstandard2.1/UltraEditor.dll`. The build does not install the mod by default.
+
+### Install a development build
+
+With BepInEx 5 already installed, close the game and copy the generated `UltraEditor.dll` into `BepInEx/plugins/UltraEditor/` inside your ULTRAKILL installation. Alternatively, build and copy it automatically:
+
+```powershell
+dotnet build UltraEditor.sln -c Release -p:DeployToGame=true
+```
+
+Do not load this build alongside another copy of UltraEditor: both currently share the same plugin GUID. Check `BepInEx/LogOutput.log` for loading errors before testing a level.
+
+The inherited workflow starts with **Create level** in chapter selection and **F1** to toggle the editor. This still needs to be verified in-game for the continuation.
+
+## Contributing
+
+Bug reports, reproducible test cases, and focused improvements are welcome. Use the [issue tracker](https://github.com/Mystic-Red/ReEdited/issues) to discuss problems and larger changes.
+
+For bug reports, include your game and mod versions, reproduction steps, relevant log output, and whether the problem occurs with other mods disabled. When changing serialization or editor behavior, test saving and reopening a level as well as loading a copy of an older level.
+
+Keep documentation, code comments, interface text, and messages in **English**.
+
+## Credits
+
+- **Duviz / 2duviz2 and the UltraEditor contributors** — the original editor, code, and bundled assets. [Original repository](https://github.com/2duviz2/UltraEditor).
+- **Mystic-Red** — the ReEdited continuation. [ReEdited repository](https://github.com/Mystic-Red/ReEdited).
+- **BepInEx and the libraries used by UltraEditor** — the modding foundation and dependencies.
+
+ReEdited is an unofficial community project and is not affiliated with or endorsed by ULTRAKILL's developers or publisher.
+
+## License status
+
+No license file was found in the upstream snapshot used for this continuation. Permissions for the original code and bundled assets still need clarification before distributing a ReEdited release. This README does not assign a new license to upstream work.

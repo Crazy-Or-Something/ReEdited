@@ -1,15 +1,17 @@
 ﻿<Project>
+	<Import Project="Paths.local.props" Condition="Exists('Paths.local.props')" />
 	<PropertyGroup>
-		<!-- Set this to where ever your ULTRAKILL folder is. -->
-		<ULTRAKILLPath>E:\SteamLibrary\steamapps\common\ULTRAKILL</ULTRAKILLPath>
+		<!-- Override in ignored Paths.local.props or with -p:ULTRAKILLPath=... -->
+		<ULTRAKILLPath Condition="'$(ULTRAKILLPath)' == ''">$(MSBuildThisFileDirectory)..\Game</ULTRAKILLPath>
 
-		<!-- You shouldn't need to touch these. If you do, ask me about it on discord @fredayddd321ewq -->
+		<!-- Derived paths for the local game installation. -->
 		<ManagedPath>$(ULTRAKILLPath)\ULTRAKILL_Data\Managed</ManagedPath>
 		<BepInExPath>$(ULTRAKILLPath)\BepInEx</BepInExPath>
 		<CorePath>$(BepInExPath)\core</CorePath>
 		<PluginPath>$(BepInExPath)\plugins</PluginPath>
 		
-		<!-- This is the path where the DLL is copied too, if you have it in a folder or something then add the name of that folder onto here. -->
-		<CopyPath>$(PluginPath)\Stupid</CopyPath>
+		<!-- Copy only when explicitly requested with -p:DeployToGame=true. -->
+		<CopyPath Condition="'$(CopyPath)' == ''">$(PluginPath)\UltraEditor</CopyPath>
+		<DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
 	</PropertyGroup>
 </Project>

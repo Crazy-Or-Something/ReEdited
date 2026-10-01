@@ -1083,15 +1083,19 @@ public class EditorManager : MonoBehaviour
                                 Destroy(component);
                                 if (cameraSelector.selectedObject.GetComponent<CubeObject>() != null)
                                 {
-                                    cameraSelector.selectedObject.GetComponent<Collider>()?.isTrigger = false;
-                                    cameraSelector.selectedObject.GetComponent<NavMeshModifier>()?.ignoreFromBuild = false;
+                                    var collider = cameraSelector.selectedObject.GetComponent<Collider>();
+                                    if (collider != null) collider.isTrigger = false;
+                                    var modifier = cameraSelector.selectedObject.GetComponent<NavMeshModifier>();
+                                    if (modifier != null) modifier.ignoreFromBuild = false;
                                 }
                                 else if (cameraSelector.selectedObject.GetComponent<CubeObject>() == null)
                                 {
                                     CubeObject.Create(cameraSelector.selectedObject, MaterialChoser.materialTypes.Default);
                                     if (cameraSelector.selectedObject.GetComponent<Collider>() == null) cameraSelector.selectedObject.AddComponent<BoxCollider>();
-                                    cameraSelector.selectedObject.GetComponent<Collider>()?.isTrigger = false;
-                                    cameraSelector.selectedObject.GetComponent<NavMeshModifier>()?.ignoreFromBuild = false;
+                                    var collider = cameraSelector.selectedObject.GetComponent<Collider>();
+                                    if (collider != null) collider.isTrigger = false;
+                                    var modifier = cameraSelector.selectedObject.GetComponent<NavMeshModifier>();
+                                    if (modifier != null) modifier.ignoreFromBuild = false;
                                 }
                                 PlayAudio(removeComponent);
                                 Billboard.UpdateBillboards();
