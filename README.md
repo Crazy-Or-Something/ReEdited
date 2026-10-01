@@ -12,7 +12,11 @@ The goal is to make creating levels more flexible and approachable: better build
 
 UltraEditor provides the foundation: an in-game editor, object placement and inspection, game prefab browsing, custom level saving/loading, and gameplay components such as triggers, moving platforms, lights, and music.
 
-ReEdited currently adds a configurable local build setup and C# 13 compatibility for the .NET 9 SDK. The compiled DLL and plugin identity still use the original UltraEditor names.
+ReEdited currently adds a configurable local build setup, C# 13 compatibility for the .NET 9 SDK, and a categorized asset browser. The compiled DLL and plugin identity still use the original UltraEditor names.
+
+The asset browser opens in `Assets/ReEdited/`, with alphabetically sorted folders for enemies, decorations, interactive objects, doors, obstacles, sandbox objects, effects, and special rooms. Empty categories are hidden. `Recommended` keeps the original editor's curated selection. Use the existing parent-folder button to return to `Assets/` and browse the original asset folders.
+
+Categories collect existing game assets; they do not add new models or guarantee that every prefab works independently in a custom level. Asset keys used for placement and saving remain unchanged. The category logic is tested, but the in-game layout and placement workflow still require verification.
 
 The inherited editor is unfinished. Save compatibility and complete property persistence still need work, so keep backups of levels when testing development builds. The inherited community level browser uses the original project's online services; their availability has not been verified.
 
@@ -22,7 +26,7 @@ These are development goals. Scope and implementation may change as the underlyi
 
 | Stage | Planned work |
 | --- | --- |
-| Building tools and content | Better object browsing, search and categories, favorites, grid snapping, improved duplication, and more objects, enemies, and events. |
+| Building tools and content | Build on the categorized browser with search, favorites, grid snapping, improved duplication, and more objects, enemies, and events. |
 | Script editor | In-game editing, event templates, object references, compilation, and an error console. C# is the initial language proposal. |
 | OBJ and FBX import | Import models with scale and rotation controls, materials, textures, and optional collision generation. Start with OBJ, then validate a runtime FBX importer. |
 | Lightweight model editor | Create and edit primitives, vertices, edges, and faces; add extrusion, cuts, joining, materials, and undo/redo. |
@@ -87,6 +91,16 @@ dotnet build UltraEditor.sln -c Release -p:DeployToGame=true
 Do not load this build alongside another copy of UltraEditor: both currently share the same plugin GUID. Check `BepInEx/LogOutput.log` for loading errors before testing a level.
 
 The inherited workflow starts with **Create level** in chapter selection and **F1** to toggle the editor. This still needs to be verified in-game for the continuation.
+
+## Development checks
+
+The catalog checks run without the game or additional test packages:
+
+```powershell
+dotnet run --project tests/AssetCatalog.Tests/AssetCatalog.Tests.csproj -c Release
+```
+
+For an in-game check, open the editor's asset browser, navigate through categories and back to the original folders, place a recommended object and a categorized prefab, then save and reopen a copy of the level. Check that navigation leaves no stale buttons and that objects retain their original asset references.
 
 ## Contributing
 

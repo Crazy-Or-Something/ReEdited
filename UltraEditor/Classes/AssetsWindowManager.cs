@@ -1,5 +1,6 @@
 ﻿namespace UltraEditor.Classes;
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -34,7 +35,7 @@ public class AssetsWindowManager : MonoBehaviour
     /// <summary> Setup the window. </summary>
     public void Start()
     {
-        CurrentFolder = "Assets/UltraEditor/"; // start in the assets folder
+        CurrentFolder = AssetCatalog.Root;
         Refresh();
     }
 
@@ -55,11 +56,16 @@ public class AssetsWindowManager : MonoBehaviour
             return;
 
         // delete children
-        for (int i = 2; i < transform.childCount; i++) 
+        for (int i = 2; i < transform.childCount; i++)
+        {
+            transform.GetChild(i).gameObject.SetActive(false);
             Destroy(transform.GetChild(i).gameObject);
+        }
 
         // load folders in this current folder
-        foreach (string folder in Folders.Keys.Where(key => key.StartsWith(CurrentFolder) && key[CurrentFolder.Length..].Occurrences('/') == 1))
+        foreach (string folder in Folders.Keys
+            .Where(key => key.StartsWith(CurrentFolder, StringComparison.Ordinal) && key[CurrentFolder.Length..].Occurrences('/') == 1)
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase))
         {
             AssetFolder newAssetFolder = Instantiate(FolderTemplate, transform);
             newAssetFolder.folderPath = folder;
@@ -77,7 +83,7 @@ public class AssetsWindowManager : MonoBehaviour
 
             // get item color based on the key-folder its in
             string keyFolder = Path.GetDirectoryName(key).Replace('\\', '/') + '/'; // key folders is the folder, based off of the key :3
-            if (ItemColorListeners.TryGetValue(keyFolder, out Color col) || ItemColorListeners.TryGetValue(key, out col))
+            if (ItemColorListeners.TryGetValue(key, out Color col) || ItemColorListeners.TryGetValue(keyFolder, out col))
                 newAssetItem.GetComponent<Image>().color = col;
 
             newAssetItem.gameObject.SetActive(true);
@@ -99,16 +105,23 @@ public class AssetsWindowManager : MonoBehaviour
     /// <summary> Loads everything important ahead of time meow rawr miaow :333 </summary>
     public static void Load()
     {
+        Folders.Clear();
+        ItemColorListeners.Clear();
         // folders
         LoadFolders();
         LoadDefaultAssets();
+
+        // Take a snapshot before adding virtual folders to the same dictionary.
+        var catalog = AssetCatalog.Create(Folders.Values.SelectMany(keys => keys), Folders["Assets/UltraEditor/"]);
+        foreach (var folder in catalog)
+            Folders[folder.Key] = folder.Value;
 
         // we want items in specific key-folders to be colored differently cuz it looks cool, so load those listeners too :3
         RegisterItemColorListener(new(1f, 1f, 0f), "Assets/Prefabs/Levels/Special Rooms/", "Assets/Prefabs/Levels/", "Bonus");
         RegisterItemColorListener(new(0f, 0.9f, 1f), "Assets/Prefabs/Levels/Interactive/", "AltarBlueOff", "AltarRedOff");
         RegisterItemColorListener(new(0.25f, 1f, 0.75f), "Assets/Prefabs/Levels/Obstacles/");
         RegisterItemColorListener(new(0.5f, 0.4f, 1f), "Assets/Prefabs/Levels/Decorations/");
-        RegisterItemColorListener(new(0.4f, 0f, 0.4f), "Assets/Prefabs/Levels/Door/");
+        RegisterItemColorListener(new(0.4f, 0f, 0.4f), "Assets/Prefabs/Levels/Doors/");
         RegisterItemColorListener(new(1f, 0.2f, 0.2f), "Assets/Prefabs/Enemies/");
     }
 
