@@ -1,6 +1,7 @@
 ﻿namespace UltraEditor.Classes;
 
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CameraMovement : MonoBehaviour
 {
@@ -11,9 +12,11 @@ public class CameraMovement : MonoBehaviour
 
     public Light unlitLight = null;
 
+    static bool PointerOverUI => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+
     public bool moving()
     {
-        return Input.GetMouseButton(1) && Plugin.canMove() && !EditorManager.Instance.blocker.activeSelf;
+        return Input.GetMouseButton(1) && !PointerOverUI && Plugin.canMove() && !EditorManager.Instance.blocker.activeSelf;
     }
 
     public void Awake()
@@ -35,6 +38,7 @@ public class CameraMovement : MonoBehaviour
     {
         if (!Plugin.canMove()) return;
         if (EditorManager.Instance.blocker.activeSelf) return;
+        if (Input.GetMouseButton(1) && PointerOverUI) return;
 
         float speed = movementSpeed * (Input.GetKey(KeyCode.LeftShift) ? shiftMultiplier : 1f) * Mathf.Min(Time.unscaledDeltaTime, 0.1f);
         float horizontal = Input.GetAxisRaw("Horizontal") * speed;

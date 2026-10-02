@@ -18,6 +18,8 @@ The asset browser opens in `Assets/ReEdited/`, with alphabetically sorted folder
 
 The first tile, **Search all assets...**, searches names throughout the catalog, ignoring case. Results keep their original spawn keys and appear alphabetically without duplicates. Up to 100 results are displayed; narrow the query if more match. Clear the text or use the parent-folder button to return to your previous folder. Camera movement and editing shortcuts are blocked while typing in the search field.
 
+**Right-click an asset** to add or remove it from your favorites; left-click still places it. Favorite assets display `[*]` before their names and appear in `Assets/ReEdited/Favorites/`. Favorites are saved locally between sessions, including when marked from search results. They are personal preferences and are not included in shared levels. Saved favorites that are unavailable in the current game catalog are hidden.
+
 Categories collect existing game assets; they do not add new models or guarantee that every prefab works independently in a custom level. Asset keys used for placement and saving remain unchanged. The category logic is tested, but the in-game layout and placement workflow still require verification.
 
 The inherited editor is unfinished. Save compatibility and complete property persistence still need work, so keep backups of levels when testing development builds. The inherited community level browser uses the original project's online services; their availability has not been verified.
@@ -28,7 +30,7 @@ These are development goals. Scope and implementation may change as the underlyi
 
 | Stage | Planned work |
 | --- | --- |
-| Building tools and content | Build on the categorized browser and search with favorites, grid snapping, improved duplication, and more objects, enemies, and events. |
+| Building tools and content | Build on the categorized browser, search, and favorites with grid snapping, improved duplication, and more objects, enemies, and events. |
 | Script editor | In-game editing, event templates, object references, compilation, and an error console. C# is the initial language proposal. |
 | OBJ and FBX import | Import models with scale and rotation controls, materials, textures, and optional collision generation. Start with OBJ, then validate a runtime FBX importer. |
 | Lightweight model editor | Create and edit primitives, vertices, edges, and faces; add extrusion, cuts, joining, materials, and undo/redo. |
@@ -76,7 +78,7 @@ Models, textures, scripts, and animations should travel with the level rather th
 
    ```powershell
    dotnet build UltraEditor.sln -c Release
-   ```
+
 
 The output is `UltraEditor/bin/Release/netstandard2.1/UltraEditor.dll`. The build does not install the mod by default.
 
@@ -94,13 +96,13 @@ The inherited workflow starts with **Create level** in chapter selection and **F
 
 ## Development checks
 
-The catalog checks run without the game or additional test packages:
+The catalog, search, and favorites filtering checks run without the game or additional test packages:
 
 ```powershell
 dotnet run --project tests/AssetCatalog.Tests/AssetCatalog.Tests.csproj -c Release
 ```
 
-For an in-game check, open the editor's asset browser, navigate through categories and back to the original folders, place a recommended object and a categorized prefab, then save and reopen a copy of the level. Check that navigation leaves no stale buttons and that objects retain their original asset references.
+For an in-game check, open the editor's asset browser, navigate through categories and back to the original folders, place a recommended object and a categorized prefab, then save and reopen a copy of the level. Check that navigation leaves no stale buttons and that objects retain their original asset references. Mark an asset from a category and from search results, verify its `[*]` label and Favorites entry, then restart the game to check persistence. Remove a favorite from the Favorites folder and verify that left-click placement still works and right-clicking a card does not rotate the camera. In-game behavior and PlayerPrefs persistence still require this manual verification.
 
 ## Contributing
 

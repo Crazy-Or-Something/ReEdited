@@ -1,6 +1,7 @@
 ﻿namespace UltraEditor.Classes;
 
 using System;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,6 +31,8 @@ public class AssetsWindowManager : MonoBehaviour
 
     const int SearchResultLimit = 100;
     const float SearchDelay = 0.15f;
+    const string FavoritesPreference = "ReEdited_AssetFavorites";
+    HashSet<string> favorites = new(StringComparer.Ordinal);
     TMP_InputField searchInput;
     string searchQuery = "";
     List<string> searchKeys = [];
@@ -37,6 +40,36 @@ public class AssetsWindowManager : MonoBehaviour
     float refreshAt;
     public static bool IsSearchFocused => Instance != null && Instance.searchInput != null &&
         Instance.searchInput.gameObject.activeInHierarchy && Instance.searchInput.isFocused;
+
+    public static bool IsFavorite(string key) => Instance != null && Instance.favorites.Contains(key);
+
+    public void ToggleFavorite(string key)
+    {
+        if (!searchKeys.Contains(key)) return;
+        if (!favorites.Remove(key)) favorites.Add(key);
+        PlayerPrefs.SetString(FavoritesPreference, JsonConvert.SerializeObject(favorites.OrderBy(value => value, StringComparer.Ordinal)));
+        PlayerPrefs.Save();
+        UpdateFavoritesFolder();
+        Refresh();
+    }
+
+    void LoadFavorites()
+    {
+        try
+        {
+            var saved = JsonConvert.DeserializeObject<List<string>>(PlayerPrefs.GetString(FavoritesPreference, "[]"));
+            favorites = new HashSet<string>((saved ?? []).Where(key => !string.IsNullOrWhiteSpace(key)), StringComparer.Ordinal);
+        }
+        catch (JsonException)
+        {
+            favorites.Clear();
+            Plugin.LogError("Could not read asset favorites. The saved list contains invalid JSON.");
+        }
+        UpdateFavoritesFolder();
+    }
+
+    void UpdateFavoritesFolder() =>
+        Folders[AssetCatalog.FavoritesFolder] = AssetCatalog.GetFavorites(searchKeys, favorites);
 
     /// <summary> Assign the Instance. </summary>
     public void Awake() =>
@@ -47,6 +80,7 @@ public class AssetsWindowManager : MonoBehaviour
     {
         CurrentFolder = AssetCatalog.Root;
         searchKeys = Folders.Values.SelectMany(keys => keys).Distinct(StringComparer.Ordinal).ToList();
+        LoadFavorites();
         CreateSearchInput();
         Refresh();
     }
@@ -186,7 +220,9 @@ public class AssetsWindowManager : MonoBehaviour
         AssetsFolderPathText.text = searching
             ? resultCount == 0 ? "No assets found. Back to clear search."
                 : $"Search: {keys.Count} of {resultCount} results. Back to clear."
-            : CurrentFolder;
+            : CurrentFolder == AssetCatalog.FavoritesFolder && keys.Count == 0
+                ? "No favorites yet. Right-click an asset to add it."
+                : CurrentFolder + " | Right-click to favorite";
 
         StartCoroutine(transform.parent.Find("Scrollbar").GetComponent<ResetScrollbar>().Reset());
     }

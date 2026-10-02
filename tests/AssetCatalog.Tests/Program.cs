@@ -27,6 +27,14 @@ Assert(AssetCatalog.Search(recommended, "altar").Single() == "AltarBlueOff", "Se
 Assert(AssetCatalog.Search(discovered, "missing").Count == 0, "Missing names produce no results.");
 Assert(AssetCatalog.Search(discovered, " ").Count == 0, "Blank input leaves search mode.");
 Console.WriteLine("All asset search checks passed.");
+Assert(AssetCatalog.GetFavorites(discovered, [zombie, zombie, "missing"]).SequenceEqual(new[] { zombie }),
+    "Favorites exclude unavailable keys and remove duplicates without changing spawn keys.");
+Assert(AssetCatalog.GetFavorites(discovered, [zombie, drone]).SequenceEqual(new[] { drone, zombie }),
+    "Favorites are sorted by display name.");
+Assert(AssetCatalog.GetFavorites(recommended, ["AltarBlueOff"]).Single() == "AltarBlueOff",
+    "Custom aliases can be favorites.");
+Assert(AssetCatalog.GetFavorites(discovered, []).Count == 0, "An empty favorites list produces no assets.");
+Console.WriteLine("All asset favorites checks passed.");
 
 static void Assert(bool condition, string message)
 {

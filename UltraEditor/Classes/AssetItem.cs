@@ -3,8 +3,9 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class AssetItem : MonoBehaviour
+public class AssetItem : MonoBehaviour, IPointerClickHandler
 {
     public string assetPath;
     public string assetName;
@@ -16,12 +17,21 @@ public class AssetItem : MonoBehaviour
     {
         if (string.IsNullOrEmpty(assetPath))
             assetPath = assetItemObject.name;
-        else
-            assetNameText.text = assetName;
+        if (assetNameText != null)
+        {
+            string label = string.IsNullOrEmpty(assetName) ? assetNameText.text : assetName;
+            assetNameText.text = (AssetsWindowManager.IsFavorite(assetPath) ? "[*] " : "") + label;
+        }
         
         GetComponent<Button>()?.onClick.AddListener(() =>
         {
             EditorManager.Instance.SpawnAsset(assetPath);
         });
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Right)
+            AssetsWindowManager.Instance?.ToggleFavorite(assetPath);
     }
 }

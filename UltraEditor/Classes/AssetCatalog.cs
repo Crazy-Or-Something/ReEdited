@@ -9,6 +9,13 @@ using System.Linq;
 public static class AssetCatalog
 {
     public const string Root = "Assets/ReEdited/";
+    public const string FavoritesFolder = Root + "Favorites/";
+
+    public static List<string> GetFavorites(IEnumerable<string> availableKeys, IEnumerable<string> favoriteKeys)
+    {
+        var favorites = new HashSet<string>(favoriteKeys, StringComparer.Ordinal);
+        return Sort(availableKeys.Where(key => favorites.Contains(key)));
+    }
 
     public static List<string> Search(IEnumerable<string> keys, string query)
     {
