@@ -1,4 +1,4 @@
-﻿namespace UltraEditor.Classes;
+namespace UltraEditor.Classes;
 
 using BlackholeChaos.Scripts;
 using System;
@@ -80,13 +80,13 @@ public class EditorManager : MonoBehaviour
                 Cursor.visible = true;
         }
 
-        if (Input.GetKeyDown(Plugin.toggleEditorCanvasKey))
+        if (!EditorSettings.IsConfigOpen && EditorSettings.KeyDown("toggle_ui", Plugin.toggleEditorCanvasKey))
         {
             editorCanvas.SetActive(!editorCanvas.activeSelf);
             cameraSelector.ClearHover();
         }
 
-        if (!AssetsWindowManager.IsSearchFocused && Input.GetKeyDown(Plugin.deleteObjectKey) && editorCanvas.activeSelf)
+        if (!EditorSettings.IsConfigOpen && !AssetsWindowManager.IsSearchFocused && EditorSettings.KeyDown("delete_object", Plugin.deleteObjectKey) && editorCanvas.activeSelf)
         {
             if (Input.GetKey(Plugin.ctrlKey) && Input.GetKey(Plugin.shiftKey) && friendlyAdvancedInspector)
                 DeleteScene(true);
@@ -100,7 +100,7 @@ public class EditorManager : MonoBehaviour
         if (Plugin.isDuplicateKeyPressed() && IsObjectEditable() && editorCanvas.activeSelf)
             duplicateObject();
 
-        if (!AssetsWindowManager.IsSearchFocused && Input.GetKey(Plugin.createCubeKey) && editorCanvas.activeSelf)
+        if (!EditorSettings.IsConfigOpen && !AssetsWindowManager.IsSearchFocused && EditorSettings.KeyHeld("create_cube", Plugin.createCubeKey) && editorCanvas.activeSelf)
         {
             createCube(true, false);
         }

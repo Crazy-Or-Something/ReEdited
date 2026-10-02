@@ -40,7 +40,7 @@ public class CameraMovement : MonoBehaviour
         if (EditorManager.Instance.blocker.activeSelf) return;
         if (Input.GetMouseButton(1) && PointerOverUI) return;
 
-        float speed = movementSpeed * (Input.GetKey(KeyCode.LeftShift) ? shiftMultiplier : 1f) * Mathf.Min(Time.unscaledDeltaTime, 0.1f);
+        float speed = EditorSettings.MovementSpeed * (Input.GetKey(Plugin.shiftKey) ? EditorSettings.FastMovementMultiplier : 1f) * Mathf.Min(Time.unscaledDeltaTime, 0.1f);
         float horizontal = Input.GetAxisRaw("Horizontal") * speed;
         float vertical = Input.GetAxisRaw("Vertical") * speed;
         float ascend = (Input.GetKey(KeyCode.E) ? 1 : 0 - (Input.GetKey(KeyCode.Q) ? 1 : 0)) * speed;
@@ -52,8 +52,8 @@ public class CameraMovement : MonoBehaviour
         }
         if (Input.GetMouseButton(1))
         {
-            float mouseX = Input.GetAxisRaw("Mouse X") * mouseSensitivity * (EditorManager.sensitivity / 50f);
-            float mouseY = Input.GetAxisRaw("Mouse Y") * mouseSensitivity * (EditorManager.sensitivity / 50f);
+            float mouseX = Input.GetAxisRaw("Mouse X") * mouseSensitivity * EditorSettings.LookMultiplier * (EditorManager.sensitivity / 50f);
+            float mouseY = Input.GetAxisRaw("Mouse Y") * mouseSensitivity * EditorSettings.LookMultiplier * (EditorManager.sensitivity / 50f);
             transform.Rotate(Vector3.up, mouseX, Space.World);
             transform.Rotate(Vector3.right, -mouseY, Space.Self);
             MouseController.SetCursorPos(savedMousePos.x, savedMousePos.y);

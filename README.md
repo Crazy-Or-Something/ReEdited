@@ -38,6 +38,21 @@ These are development goals. Scope and implementation may change as the underlyi
 
 Models, textures, scripts, and animations should travel with the level rather than depend on files elsewhere on the creator's computer. Saving and reopening levels reliably is part of every stage.
 
+## Editor settings and mod dependencies
+
+ReEdited requires [Thorn Core 0.5.0 or newer](https://thunderstore.io/c/ultrakill/p/end_4/Thorn_Core/) in addition to BepInEx 5. Install the complete package and its dependencies through a mod manager. The pinned package requires FixPluginTypesSerialization 1.0.0, NukeLib 0.12.0, Notiffy 0.1.4, and Fireman 0.1.1. The build reference DLL alone does not include Thorn's UI assets or runtime dependencies. Thorn's separate gameplay and HUD modules are not required.
+
+Open Thorn's menu with **Right Shift** (its default shortcut), then find **ReEdited** under **Modules > Utility** or search for it. Its settings include:
+
+- Editor toggle, selection/move/scale/rotation tools, UI toggle, delete, and cube creation keys, with optional modifier keys.
+- Editor camera movement speed, fast movement multiplier, and look sensitivity multiplier.
+
+Camera look sensitivity multiplies the existing game mouse sensitivity. Settings are saved by Thorn and follow its active profile. Changes apply immediately. Editor controls are blocked while Thorn's menu is open. This integration styles the settings menu; the inherited editor windows still use their existing interface.
+
+[UnityExplorer](https://github.com/sinai-dev/UnityExplorer) is an optional development tool for inspecting and debugging game objects. ReEdited does not require it.
+
+The settings integration compiles against Thorn Core 0.5.0. In-game panel rendering, key reassignment, profile switching, and persistence still require manual verification.
+
 ## Build from source
 
 ### Requirements
@@ -46,6 +61,7 @@ Models, textures, scripts, and animations should travel with the level rather th
 - An installed copy of **ULTRAKILL**, including `ULTRAKILL_Data/Managed`.
 - Access to the NuGet feeds configured in the project to restore its existing dependencies.
 - **BepInEx 5** installed in the game to run the resulting mod. The project references BepInEx 5.4.21.
+- **Thorn Core 0.5.0 or newer** and its dependencies installed in the game to run the mod, with `ThornClient.dll` available as a build reference.
 
 ### Setup
 
@@ -78,7 +94,7 @@ Models, textures, scripts, and animations should travel with the level rather th
 
    ```powershell
    dotnet build UltraEditor.sln -c Release
-
+   ```
 
 The output is `UltraEditor/bin/Release/netstandard2.1/UltraEditor.dll`. The build does not install the mod by default.
 
@@ -105,6 +121,8 @@ dotnet run --project tests/AssetCatalog.Tests/AssetCatalog.Tests.csproj -c Relea
 For an in-game check, open the editor's asset browser, navigate through categories and back to the original folders, place a recommended object and a categorized prefab, then save and reopen a copy of the level. Check that navigation leaves no stale buttons and that objects retain their original asset references. Mark an asset from a category and from search results, verify its `[*]` label and Favorites entry, then restart the game to check persistence. Remove a favorite from the Favorites folder and verify that left-click placement still works and right-clicking a card does not rotate the camera. In-game behavior and PlayerPrefs persistence still require this manual verification.
 
 ## Contributing
+
+For settings changes, open Thorn's ReEdited configuration panel, reassign a tool key with and without a modifier, adjust each camera value, switch profiles, and restart the game. Verify that the values are restored and that typing or recording keys in the panel does not delete objects, move the camera, or toggle the editor. Set a shortcut to None to check that it is disabled. Check that controls resume when Thorn's menu closes.
 
 Bug reports, reproducible test cases, and focused improvements are welcome. Use the [issue tracker](https://github.com/Mystic-Red/ReEdited/issues) to discuss problems and larger changes.
 

@@ -1,4 +1,4 @@
-﻿namespace UltraEditor.Classes;
+namespace UltraEditor.Classes;
 
 using System.Collections.Generic;
 using UltraEditor.Classes.Canvas;
@@ -182,18 +182,18 @@ public class CameraSelector : MonoBehaviour
 
     public void Update()
     {
-        if (AssetsWindowManager.IsSearchFocused)
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen)
         {
             ClearHover();
             return;
         }
-        if (Input.GetKeyDown(Plugin.selectCursorKey)) selectionMode = SelectionMode.Cursor;
+        if (EditorSettings.KeyDown("select_tool", Plugin.selectCursorKey)) selectionMode = SelectionMode.Cursor;
 
-        if (Input.GetKeyDown(Plugin.selectMoveKey)) selectionMode = SelectionMode.Move;
+        if (EditorSettings.KeyDown("move_tool", Plugin.selectMoveKey)) selectionMode = SelectionMode.Move;
 
-        if (Input.GetKeyDown(Plugin.selectScaleKey)) selectionMode = SelectionMode.Scale;
+        if (EditorSettings.KeyDown("scale_tool", Plugin.selectScaleKey)) selectionMode = SelectionMode.Scale;
 
-        if (Input.GetKeyDown(Plugin.selectRotationKey)) selectionMode = SelectionMode.Rotate;
+        if (EditorSettings.KeyDown("rotate_tool", Plugin.selectRotationKey)) selectionMode = SelectionMode.Rotate;
 
         if (selectionMode == SelectionMode.Cursor)
             HandleCursorMode();

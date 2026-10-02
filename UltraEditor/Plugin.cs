@@ -1,4 +1,4 @@
-﻿namespace UltraEditor;
+namespace UltraEditor;
 
 using BepInEx;
 using HarmonyLib;
@@ -10,6 +10,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
 
 [BepInPlugin(GUID, Name, Version)]
+[BepInDependency(EditorSettings.DependencyGuid, EditorSettings.MinimumVersion)]
 public class Plugin : BaseUnityPlugin
 {
     public const string GUID = "duviz.ultrakill.ultraeditor";
@@ -35,7 +36,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isToggleEnabledKeyPressed()
     {
-        if (AssetsWindowManager.IsSearchFocused) return false;
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen) return false;
         if (Input.GetKey(altKey) && Input.GetKey(shiftKey) && Input.GetKeyDown(KeyCode.A))
         {
             return true;
@@ -45,7 +46,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isDuplicateKeyPressed()
     {
-        if (AssetsWindowManager.IsSearchFocused) return false;
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen) return false;
         if (Input.GetKey(ctrlKey) && Input.GetKeyDown(KeyCode.D))
         {
             return true;
@@ -55,7 +56,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isSelectPressed()
     {
-        if (AssetsWindowManager.IsSearchFocused) return false;
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen) return false;
         if (Input.GetKey(altKey) && Input.GetKeyDown(KeyCode.S))
         {
             return true;
@@ -65,7 +66,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool canMove()
     {
-        return !AssetsWindowManager.IsSearchFocused && !Input.GetKey(ctrlKey) && !Input.GetKey(altKey);
+        return !EditorSettings.IsConfigOpen && !AssetsWindowManager.IsSearchFocused && !Input.GetKey(ctrlKey) && !Input.GetKey(altKey);
     }
 
     public void Awake()
@@ -73,6 +74,7 @@ public class Plugin : BaseUnityPlugin
         instance = this;
         LogInfo("Hello, the Instagram community!");
         System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+        EditorSettings.Initialize();
 
         BundlesManager.Load();
         EditorVariablesList.SetupEditorVariables();
@@ -95,7 +97,8 @@ public class Plugin : BaseUnityPlugin
 
     public void Update()
     {
-        if (Input.GetKeyDown(editorOpenKey) && (SceneHelper.CurrentScene != EditorManager.EditorSceneName || EditorManager.canOpenEditor || EmptySceneLoader.forceLevelCanOpenEditor || (EditorManager.Instance != null && EditorManager.Instance.editorCanvas.activeInHierarchy)) && SceneHelper.PendingScene == null)
+        if (EditorSettings.IsConfigOpen) return;
+        if (EditorSettings.KeyDown("toggle_editor", editorOpenKey) && (SceneHelper.CurrentScene != EditorManager.EditorSceneName || EditorManager.canOpenEditor || EmptySceneLoader.forceLevelCanOpenEditor || (EditorManager.Instance != null && EditorManager.Instance.editorCanvas.activeInHierarchy)) && SceneHelper.PendingScene == null)
         {
             EditorManager.Create();
         }

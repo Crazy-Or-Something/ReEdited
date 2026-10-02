@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="Paths.props" />
 
 	<PropertyGroup>
@@ -33,6 +33,10 @@
 		<PackageReference Include="UnityEngine.Modules" Version="2022.3.29" />
 
 		<!-- Ultrakill DLL'S -->
+		<Reference Include="ThornClient">
+			<HintPath>$(ThornClientPath)</HintPath>
+			<Private>false</Private>
+		</Reference>
 		<Reference Include="Assembly-CSharp">
 			<HintPath>$(ManagedPath)\Assembly-CSharp.dll</HintPath>
 		</Reference>
@@ -62,6 +66,7 @@
 	</ItemGroup>
 
 	<Target Name="ValidateGamePath" BeforeTargets="ResolveAssemblyReferences">
+		<Error Condition="!Exists('$(ThornClientPath)')" Text="ThornClient.dll not found. Run scripts/Fetch-Dependencies.ps1 or set ThornClientPath in Paths.local.props." />
 		<Error Condition="!Exists('$(ManagedPath)\Assembly-CSharp.dll')" Text="ULTRAKILL DLLs not found. Set ULTRAKILLPath in UltraEditor/Paths.local.props or pass -p:ULTRAKILLPath=your-game-folder." />
 	</Target>
 

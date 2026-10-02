@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
 	<Import Project="Paths.local.props" Condition="Exists('Paths.local.props')" />
 	<PropertyGroup>
 		<!-- Override in ignored Paths.local.props or with -p:ULTRAKILLPath=... -->
@@ -13,5 +13,6 @@
 		<!-- Copy only when explicitly requested with -p:DeployToGame=true. -->
 		<CopyPath Condition="'$(CopyPath)' == ''">$(PluginPath)\UltraEditor</CopyPath>
 		<DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
+		<ThornClientPath Condition="'$(ThornClientPath)' == ''">$(MSBuildThisFileDirectory)..\.dependencies\ThornClient.dll</ThornClientPath>
 	</PropertyGroup>
 </Project>
