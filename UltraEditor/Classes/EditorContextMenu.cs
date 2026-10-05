@@ -78,7 +78,7 @@ public sealed class EditorContextMenu : MonoBehaviour
         if (!open) return;
         InitializeStyles();
         GUI.depth = -1000;
-        bounds.height = creating ? 186 : 300;
+        bounds.height = creating ? 186 : 354;
         bounds.x = Mathf.Clamp(bounds.x, 0, Mathf.Max(0, Screen.width - bounds.width));
         bounds.y = Mathf.Clamp(bounds.y, 0, Mathf.Max(0, Screen.height - bounds.height));
         var current = Event.current;
@@ -103,6 +103,8 @@ public sealed class EditorContextMenu : MonoBehaviour
         else
         {
             Row("Create                         >", () => creating = true, true, false);
+            Row("Copy", selector.CopySelected, editable);
+            Row("Paste", selector.PasteClipboard, selector.CanPaste);
             Row("Duplicate", manager.duplicateObject, editable);
             Row("Delete", manager.deleteObject, editable);
             Row("Undo", selector.UndoEdit, selector.CanUndo);

@@ -74,6 +74,10 @@ public sealed class ReEditedSettingsModule : ThornClient.Core.Module
         BindKey(shortcuts, "toggle_ui", "Toggle editor UI", KeyCode.F9);
         BindKey(shortcuts, "delete_object", "Delete object", KeyCode.Delete);
         BindKey(shortcuts, "create_cube", "Create cube", KeyCode.KeypadPlus);
+        Keys.Add("copy", CreateSetting("copy", "Copy object", "Copy the selected object and its children.",
+            new Keybind(KeyCode.C, KeyCode.LeftControl), shortcuts));
+        Keys.Add("paste", CreateSetting("paste", "Paste object", "Paste a copy in front of the editor camera.",
+            new Keybind(KeyCode.V, KeyCode.LeftControl), shortcuts));
         Keys.Add("undo", CreateSetting("undo", "Undo", "Undo the last object creation, duplication, deletion, or transform drag.",
             new Keybind(KeyCode.Z, KeyCode.LeftControl), shortcuts));
         Keys.Add("redo", CreateSetting("redo", "Redo", "Restore the last undone object edit.",

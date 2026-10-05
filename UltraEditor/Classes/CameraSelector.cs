@@ -151,11 +151,68 @@ public class CameraSelector : MonoBehaviour
     public bool dragging = false;
     readonly EditHistory history = new();
     Transform historyStorage;
+    GameObject clipboard;
+    bool clipboardActive;
+    Quaternion clipboardRotation;
+    Vector3 clipboardScale;
+    public bool CanPaste => clipboard != null;
     public bool CanUndo => history.CanUndo;
     public bool CanRedo => history.CanRedo;
 
-    public void ClearHistory() { FinishDrag(); history.Clear(); }
-    void OnDestroy() => history.Clear();
+    public void ClearHistory() { FinishDrag(); history.Clear(); ClearClipboard(); }
+    void OnDestroy() { history.Clear(); ClearClipboard(); }
+
+    void ClearClipboard()
+    {
+        if (clipboard) Destroy(clipboard);
+        clipboard = null;
+    }
+
+    public void CopySelected()
+    {
+        FinishDrag();
+        if (!selectedObject || !EditorManager.Instance.IsObjectEditable()) return;
+        ClearHover();
+        ClearSelectedMaterial();
+        ClearClipboard();
+        clipboardActive = selectedObject.activeSelf;
+        clipboardRotation = selectedObject.transform.rotation;
+        clipboardScale = selectedObject.transform.lossyScale;
+        // Clone under the inactive history holder so the snapshot cannot appear in or be saved with the level.
+        clipboard = Instantiate(selectedObject, GetHistoryStorage(), false);
+        clipboard.name = selectedObject.name;
+        clipboard.SetActive(false);
+        ResetCopiedIds(clipboard);
+        EditorManager.Instance.SetAlert("Object copied!", "Info!");
+    }
+
+    public void PasteClipboard()
+    {
+        FinishDrag();
+        if (!clipboard) return;
+        var manager = EditorManager.Instance;
+        // The inactive snapshot stays reusable even after the original object is edited or deleted.
+        var pasted = Instantiate(clipboard, (Transform)null, false);
+        pasted.name = clipboard.name;
+        pasted.transform.position = manager.editorCamera.transform.position + manager.editorCamera.transform.forward * 5f;
+        pasted.transform.rotation = clipboardRotation;
+        pasted.transform.localScale = clipboardScale;
+        ResetCopiedIds(pasted);
+        pasted.SetActive(clipboardActive);
+        SelectObject(pasted);
+        RecordCreation(pasted);
+        RefreshAfterHistory();
+        manager.SetAlert("Object pasted!", "Info!");
+    }
+
+    static void ResetCopiedIds(GameObject target)
+    {
+        foreach (var item in target.GetComponentsInChildren<SpawnedObject>(true))
+        {
+            item.ID = "";
+            item.parentID = "";
+        }
+    }
 
     public void RecordCreation(GameObject target)
     {
@@ -249,6 +306,8 @@ public class CameraSelector : MonoBehaviour
         {
             if (EditorSettings.KeyDown("undo", KeyCode.None)) UndoEdit();
             else if (EditorSettings.KeyDown("redo", KeyCode.None)) RedoEdit();
+            else if (EditorSettings.KeyDown("copy", KeyCode.None)) CopySelected();
+            else if (EditorSettings.KeyDown("paste", KeyCode.None)) PasteClipboard();
         }
         if (EditorSettings.KeyDown("select_tool", Plugin.selectCursorKey)) selectionMode = SelectionMode.Cursor;
 
