@@ -12,7 +12,7 @@ The goal is to make creating levels more flexible and approachable: better build
 
 UltraEditor provides the foundation: an in-game editor, object placement and inspection, game prefab browsing, custom level saving/loading, and gameplay components such as triggers, moving platforms, lights, and music.
 
-ReEdited currently adds a configurable local build setup, C# 13 compatibility for the .NET 9 SDK, and a categorized asset browser. The compiled DLL and plugin identity still use the original UltraEditor names.
+ReEdited currently adds a configurable local build setup, C# 13 compatibility for the .NET 9 SDK, and a categorized asset browser. The displayed plugin name is **ReEdited**, version **0.1.0**. The DLL name, plugin GUID, namespaces, and level storage paths retain their original UltraEditor identifiers for compatibility.
 
 The asset browser opens in `Assets/ReEdited/`, with alphabetically sorted folders for enemies, decorations, interactive objects, doors, obstacles, sandbox objects, effects, and special rooms. Empty categories are hidden. `Recommended` keeps the original editor's curated selection. Use the existing parent-folder button to return to `Assets/` and browse the original asset folders.
 
@@ -30,7 +30,7 @@ These are development goals. Scope and implementation may change as the underlyi
 
 | Stage | Planned work |
 | --- | --- |
-| Building tools and content | Build on the categorized browser, search, and favorites with grid snapping, improved duplication, and more objects, enemies, and events. |
+| Building tools and content | Build on the categorized browser, search, favorites, and configurable movement snapping with improved duplication and more objects, enemies, and events. |
 | Script editor | In-game editing, event templates, object references, compilation, and an error console. C# is the initial language proposal. |
 | OBJ and FBX import | Import models with scale and rotation controls, materials, textures, and optional collision generation. Start with OBJ, then validate a runtime FBX importer. |
 | Lightweight model editor | Create and edit primitives, vertices, edges, and faces; add extrusion, cuts, joining, materials, and undo/redo. |
@@ -46,8 +46,18 @@ Open Thorn's menu with **Right Shift** (its default shortcut), then find **ReEdi
 
 - Editor toggle, selection/move/scale/rotation tools, UI toggle, delete, and cube creation keys, with optional modifier keys.
 - Editor camera movement speed, fast movement multiplier, and look sensitivity multiplier.
+- Grid snapping and grid size under **Building tools**.
+- Undo and redo shortcuts for object edits (Left Ctrl+Z and Left Ctrl+Y by default).
 
 Camera look sensitivity multiplies the existing game mouse sensitivity. Settings are saved by Thorn and follow its active profile. Changes apply immediately. Editor controls are blocked while Thorn's menu is open. This integration styles the settings menu; the inherited editor windows still use their existing interface.
+
+**Grid snapping** is disabled by default, with a default grid size of **0.25 world units**. Enable it in **Building tools** to snap movement with the Move tool. Grid size ranges from 0.01 to 100 world units. Global arrows snap only the coordinate being moved, using the world origin as the grid origin; the other two coordinates stay unchanged. Local arrows move in grid-sized steps along their own direction, measured from the drag's starting position, so rotated objects stay on the chosen axis.
+
+When grid snapping is disabled, hold **Left Ctrl** to snap temporarily with the configured grid size; **Left Ctrl + Left Shift** uses one-unit steps. Scale and rotation retain their inherited Ctrl shortcuts. Changing grid settings does not reposition existing objects until you drag them. Grid settings are personal Thorn preferences and are not stored in shared levels.
+
+**Right-click context menu:** quickly click the right mouse button in the editor viewport to open a dark menu beside the cursor. Clicking an editable object selects it; clicking empty space keeps your selection. **Create** offers a cube, floor, or wall. The menu also offers **Duplicate**, **Delete**, **Undo**, **Redo**, **Move**, **Rotate**, **Scale**, and **Focus selected**. Actions that need a selection or history are disabled when unavailable. Escape or a click outside closes the menu. Holding the right mouse button for 0.2 seconds or dragging it still controls camera look. Right-clicking asset cards keeps its favorites behavior.
+
+**Undo/redo** records cube/floor/wall creation, prefab placement from the asset catalog, duplication, deletion, and Move/Scale/Rotate tool drags, including snapped movement. These actions also enter history when used through the original editor buttons or shortcuts. Each completed drag is one action. Use the context menu, **Left Ctrl+Z**, or **Left Ctrl+Y**; the keyboard shortcuts can be changed in Thorn. The history holds the last 100 actions for the current editor instance and is not saved with levels. New recorded edits discard the redo branch. Undoable deletions temporarily retain the same inactive object instance, including children, under an internal history holder; these objects are excluded from level serialization and billboards. Retained objects are released when their history is discarded. Loading or clearing a level clears the history. Reparented objects and transforms changed outside the recorded tool workflow are skipped when their saved state no longer matches. Inspector edits, grouping, and hierarchy changes are not recorded yet. Keyboard undo/redo is blocked during a drag, while the editor is closed, while a modal blocker, context menu, or Thorn's menu is open, and when an input field has focus.
 
 [UnityExplorer](https://github.com/sinai-dev/UnityExplorer) is an optional development tool for inspecting and debugging game objects. ReEdited does not require it.
 
@@ -117,6 +127,22 @@ The catalog, search, and favorites filtering checks run without the game or addi
 ```powershell
 dotnet run --project tests/AssetCatalog.Tests/AssetCatalog.Tests.csproj -c Release
 ```
+
+Grid rounding checks also run without the game:
+
+```powershell
+dotnet run --project tests/GridSnap.Tests/GridSnap.Tests.csproj -c Release
+```
+
+Undo/redo ordering, invalid actions, history limits, and branching checks:
+
+```powershell
+dotnet run --project tests/EditHistory.Tests/EditHistory.Tests.csproj -c Release
+```
+
+For an in-game history check, create an object, move/scale/rotate it, duplicate it, then delete the duplicate. Undo the sequence and redo it, using both the context menu and keyboard. Repeat with grid snapping, child objects, and a prefab from the catalog. Undo an edit, make a new edit, and verify that redo is unavailable. Select another object before undoing to verify the original target changes. Save while an object is deleted or its creation is undone, then reload to verify that retained history objects are absent from the level. Verify inactive prefabs stay inactive after restoration, parent relationships survive, and clearing/loading a level removes history. Test input fields and Thorn's menu to verify Ctrl+Z/Y do not edit objects while typing. Check menu placement at screen edges, disabled actions without selection/history, Escape/outside-click dismissal, short right clicks, held right-button camera look, and asset-card favorites. These Unity interaction checks still require manual verification.
+
+For an in-game snapping check, enable Grid snapping in Thorn, select the Move tool, and drag each global axis on an object whose position is off the grid. Verify that only the moved coordinate aligns, including negative coordinates. Change the grid size and test temporary Ctrl snapping with the setting disabled, plus Ctrl+Shift one-unit steps. Rotate an object and use local arrows to verify stepped movement stays along the selected arrow. Disable snapping to check free movement, then save and reopen the level to verify positions. Restart the game and switch Thorn profiles to check the snapping preferences. These interaction checks still require manual verification.
 
 For an in-game check, open the editor's asset browser, navigate through categories and back to the original folders, place a recommended object and a categorized prefab, then save and reopen a copy of the level. Check that navigation leaves no stale buttons and that objects retain their original asset references. Mark an asset from a category and from search results, verify its `[*]` label and Favorites entry, then restart the game to check persistence. Remove a favorite from the Favorites folder and verify that left-click placement still works and right-clicking a card does not rotate the camera. In-game behavior and PlayerPrefs persistence still require this manual verification.
 

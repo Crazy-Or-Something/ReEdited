@@ -44,6 +44,7 @@ public static class Saving
     public static T[] ReverseArray<T>(T[] array)
     {
         if (array == null) return null;
+        array = array.Where(item => !(item is Component component) || !HistoryStorage.Contains(component)).ToArray();
         Array.Reverse(array);
         return array;
     }

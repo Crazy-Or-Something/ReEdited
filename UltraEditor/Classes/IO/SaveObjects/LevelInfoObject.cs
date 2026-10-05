@@ -7,7 +7,7 @@ using UnityEngine;
 public class LevelInfoObject : SavableObject
 {
     public string tipOfTheDay = "Hi!";
-    public string levelLayer = "ULTRAEDITOR /// CUSTOM LEVEL";
+    public string levelLayer = "REEDITED /// CUSTOM LEVEL";
     public string levelName = "%SAVE%";
     public bool playMusicOnDoorOpen = true;
     public bool changeLighting = false;

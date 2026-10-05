@@ -4,8 +4,9 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<AssemblyName>UltraEditor</AssemblyName>
-		<Description>WIP in-game level editor for ultrakill</Description>
-		<Version>0.0.8</Version>
+		<Product>ReEdited</Product>
+		<Description>ReEdited in-game level editor for ULTRAKILL</Description>
+		<Version>0.1.0</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>13.0</LangVersion>
 		<NoWarn>CS0649, CS0414</NoWarn>

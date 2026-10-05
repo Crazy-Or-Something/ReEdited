@@ -65,6 +65,7 @@ public class Billboard : MonoBehaviour
 
         foreach (var c in allComponents)
         {
+            if (HistoryStorage.Contains(c)) continue;
             var t = c.transform.position;
 
             switch (c)

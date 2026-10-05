@@ -5,6 +5,9 @@ using UltraEditor.Classes.Canvas;
 using UltraEditor.Classes.IO.SaveObjects;
 using Unity.AI.Navigation;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using TMPro;
 
 public class CameraSelector : MonoBehaviour
 {
@@ -33,6 +36,7 @@ public class CameraSelector : MonoBehaviour
         }
         set
         {
+            if (_selectionMode != value) FinishDrag();
             if (value == SelectionMode.Cursor)
                 DeleteArrows();
             if (value != SelectionMode.Cursor)
@@ -145,6 +149,57 @@ public class CameraSelector : MonoBehaviour
 
     private Transform[] moveArrows;
     public bool dragging = false;
+    readonly EditHistory history = new();
+    Transform historyStorage;
+    public bool CanUndo => history.CanUndo;
+    public bool CanRedo => history.CanRedo;
+
+    public void ClearHistory() { FinishDrag(); history.Clear(); }
+    void OnDestroy() => history.Clear();
+
+    public void RecordCreation(GameObject target)
+    {
+        FinishDrag();
+        history.Record(new ObjectPresenceEdit(target, GetHistoryStorage(), true));
+    }
+
+    Transform GetHistoryStorage()
+    {
+        if (historyStorage) return historyStorage;
+        var holder = new GameObject("ReEdited history storage", typeof(HistoryStorage));
+        holder.transform.SetParent(transform, false);
+        holder.SetActive(false);
+        return historyStorage = holder.transform;
+    }
+
+    public void DeleteSelected()
+    {
+        FinishDrag();
+        if (!selectedObject || !EditorManager.Instance.IsObjectEditable()) return;
+        var target = selectedObject;
+        ClearSelectedMaterial();
+        var action = new ObjectPresenceEdit(target, GetHistoryStorage(), false);
+        UnselectObject();
+        if (action.SetPresent(false)) history.Record(action);
+        else action.Discard();
+        RefreshAfterHistory();
+    }
+
+    public void UndoEdit() { FinishDrag(); if (history.Undo()) RefreshAfterHistory(); }
+    public void RedoEdit() { FinishDrag(); if (history.Redo()) RefreshAfterHistory(); }
+
+    void RefreshAfterHistory()
+    {
+        if (selectedObject && HistoryStorage.Contains(selectedObject.transform)) UnselectObject();
+        EditorManager.Instance.lastHierarchy = new GameObject[0];
+        EditorManager.Instance.UpdateInspector();
+        UpdateMoveArrows();
+        CacheMeshes();
+        Billboard.UpdateBillboards();
+    }
+    Transform dragTarget;
+    Transform dragParent;
+    TransformState dragBefore;
     int draggingAxis = -1;
     Vector3 dragStartPos;
     Vector3 objectStartPos, objectStartScale, objectStartEuler;
@@ -182,10 +237,18 @@ public class CameraSelector : MonoBehaviour
 
     public void Update()
     {
-        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen)
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen || EditorContextMenu.Visible)
         {
+            FinishDrag();
             ClearHover();
             return;
+        }
+        if (dragging && (!dragTarget || selectedObject == null || selectedObject.transform != dragTarget)) FinishDrag();
+        if (!dragging && !IsTextInputFocused() && EditorManager.Instance.editorOpen
+            && EditorManager.Instance.editorCanvas.activeInHierarchy && !EditorManager.Instance.blocker.activeSelf)
+        {
+            if (EditorSettings.KeyDown("undo", KeyCode.None)) UndoEdit();
+            else if (EditorSettings.KeyDown("redo", KeyCode.None)) RedoEdit();
         }
         if (EditorSettings.KeyDown("select_tool", Plugin.selectCursorKey)) selectionMode = SelectionMode.Cursor;
 
@@ -257,7 +320,31 @@ public class CameraSelector : MonoBehaviour
 
     void OnDisable()
     {
+        FinishDrag();
         ClearHover();
+    }
+
+    static bool IsTextInputFocused()
+    {
+        var focused = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        return focused != null && (focused.GetComponentInParent<TMP_InputField>() != null
+            || focused.GetComponentInParent<InputField>() != null);
+    }
+
+    void FinishDrag()
+    {
+        if (!dragging) return;
+        dragging = false;
+        draggingAxis = -1;
+        if (dragTarget && dragTarget.parent == dragParent)
+        {
+            var after = new TransformState(dragTarget);
+            if (!dragBefore.Matches(after)) history.Record(new TransformEdit(dragTarget, dragBefore, after));
+        }
+        dragTarget = null;
+        Cursor.visible = true;
+        if (EditorManager.Instance != null) EditorManager.Instance.UpdateInspector();
+        Billboard.UpdateBillboards();
     }
 
     void HandleCursorMode()
@@ -328,6 +415,7 @@ public class CameraSelector : MonoBehaviour
 
     public void UnselectObject()
     {
+        FinishDrag();
         if (selectedObject)
             RestoreMaterial(selectedObject);
         selectedObject = null;
@@ -353,6 +441,7 @@ public class CameraSelector : MonoBehaviour
         {
             selectionMode = SelectionMode.Cursor;
             EditorManager.Log("Can't move an static object");
+            return;
         }
 
         UpdateMoveArrows();
@@ -389,6 +478,9 @@ public class CameraSelector : MonoBehaviour
                 if (Input.GetMouseButtonDown(0))
                 {
                     dragging = true;
+                    dragTarget = selectedObject.transform;
+                    dragParent = dragTarget.parent;
+                    dragBefore = new TransformState(dragTarget);
                     draggingAxis = hoveredAxis;
                     currentArrowRot = moveArrows[hoveredAxis].transform.position - arrowHolder.transform.position;
                     objectStartPos = selectedObject.transform.position;
@@ -441,12 +533,15 @@ public class CameraSelector : MonoBehaviour
 
                 if (selectionMode == SelectionMode.Move)
                 {
-                    Vector3 target = objectStartPos + moveDir * delta * moveSpeed * 3;
-                    var s = 0.25f;
-                    if (Input.GetKey(Plugin.shiftKey))
-                        s = 1;
-                    if (Input.GetKey(Plugin.ctrlKey))
-                        target = Snap(target, s);
+                    float distance = delta * moveSpeed * 3;
+                    bool snap = EditorSettings.GridSnapping || Input.GetKey(Plugin.ctrlKey);
+                    float step = EditorSettings.GridSize;
+                    // Preserve the inherited Ctrl+Shift one-unit shortcut when snapping is temporary.
+                    if (!EditorSettings.GridSnapping && Input.GetKey(Plugin.shiftKey)) step = 1f;
+                    if (snap && !globalArrows) distance = GridSnap.Snap(distance, step);
+                    Vector3 target = objectStartPos + moveDir * distance;
+                    // Global movement must not shift either of the untouched coordinates.
+                    if (snap && globalArrows) target[draggingAxis] = GridSnap.Snap(target[draggingAxis], step);
                     selectedObject.transform.position = target;
                 }
                 if (selectionMode == SelectionMode.Scale)
@@ -470,19 +565,13 @@ public class CameraSelector : MonoBehaviour
                     selectedObject.transform.eulerAngles = target;
                 }
             }
-            if (Input.GetMouseButtonUp(0))
-            {
-                dragging = false;
-                draggingAxis = -1;
-                EditorManager.Instance.UpdateInspector();
-                Cursor.visible = true;
-                Billboard.UpdateBillboards();
-            }
+            if (!Input.GetMouseButton(0)) FinishDrag();
         }
     }
 
     public void SelectObject(GameObject obj)
     {
+        FinishDrag();
         EditorManager.PlayAudio(EditorManager.selectObject);
         if (selectedObject != null)
             RestoreMaterial(selectedObject);

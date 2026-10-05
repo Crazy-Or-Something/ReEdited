@@ -2,6 +2,9 @@
 
 using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using TMPro;
+using UnityEngine.UI;
 using UnityEngine;
 
 public static class BundlesManager
@@ -39,6 +42,10 @@ public static class BundlesManager
         exploreLevelsCanvas = editorBundle.LoadAsset<GameObject>("ExploreLevelsCanvas");
         welcomeCanvas = editorBundle.LoadAsset<GameObject>("WelcomeCanvas");
         levelCanvas = editorBundle.LoadAsset<GameObject>("OpenLevelCanvas");
+        UpdateBranding(editorCanvas);
+        UpdateBranding(exploreLevelsCanvas);
+        UpdateBranding(welcomeCanvas);
+        UpdateBranding(levelCanvas);
 
         ghostDottedOutline = editorBundle.LoadAsset<Shader>("GhostDottedOutline");
 
@@ -46,5 +53,21 @@ public static class BundlesManager
         pyramidMesh = editorBundle.LoadAsset<GameObject>("PyramidMesh");
         duvizPlushPrefab = editorBundle.LoadAsset<GameObject>("DuvizPlush");
         duvizPlushFixedPrefab = editorBundle.LoadAsset<GameObject>("DuvizPlushFixed");
+    }
+
+    // The inherited UI is embedded in a compiled bundle; update its title labels before instantiation.
+    static void UpdateBranding(GameObject canvas)
+    {
+        if (!canvas) return;
+        foreach (var label in canvas.GetComponentsInChildren<TMP_Text>(true)) label.text = BrandedTitle(label.text);
+        foreach (var label in canvas.GetComponentsInChildren<Text>(true)) label.text = BrandedTitle(label.text);
+    }
+
+    static string BrandedTitle(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        var match = Regex.Match(text, @"^\s*(UltraEditor|UltraEdited)(\s+v\d+(\.\d+)*.*?)?\s*$", RegexOptions.IgnoreCase);
+        if (!match.Success) return text;
+        return match.Groups[2].Success ? $"{Plugin.Name} v{Plugin.Version}" : Plugin.Name;
     }
 }

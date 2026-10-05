@@ -49,6 +49,7 @@ public class EditorManager : MonoBehaviour
             return;
         }
         Instance = this;
+        gameObject.AddComponent<EditorContextMenu>();
     }
 
     public void OnDestroy()
@@ -100,7 +101,7 @@ public class EditorManager : MonoBehaviour
         if (Plugin.isDuplicateKeyPressed() && IsObjectEditable() && editorCanvas.activeSelf)
             duplicateObject();
 
-        if (!EditorSettings.IsConfigOpen && !AssetsWindowManager.IsSearchFocused && EditorSettings.KeyHeld("create_cube", Plugin.createCubeKey) && editorCanvas.activeSelf)
+        if (!EditorSettings.IsConfigOpen && !AssetsWindowManager.IsSearchFocused && EditorSettings.KeyDown("create_cube", Plugin.createCubeKey) && editorCanvas.activeSelf)
         {
             createCube(true, false);
         }
@@ -164,6 +165,7 @@ public class EditorManager : MonoBehaviour
     {
         if ((force || (SceneHelper.CurrentScene == EditorSceneName && !StatsManager.Instance.timer)))
         {
+            if (Instance != null && Instance.cameraSelector != null) Instance.cameraSelector.ClearHistory();
             foreach (var obj in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects().ToList())
             {
                 if (obj == null) continue;
@@ -609,11 +611,13 @@ public class EditorManager : MonoBehaviour
         NavMeshModifier mod = obj.AddComponent<NavMeshModifier>();
         mod.ignoreFromBuild = true;
 
+        if (!isLoading && createPrefabObject) cameraSelector.RecordCreation(obj);
         return obj;
     }
 
-    void duplicateObject()
+    public void duplicateObject()
     {
+        if (!IsObjectEditable()) return;
         if (cameraSelector.selectedObject != null)
         {
             cameraSelector.ClearSelectedMaterial();
@@ -632,24 +636,18 @@ public class EditorManager : MonoBehaviour
             cameraSelector.SelectObject(newObj);
 
             if (Input.GetKey(Plugin.altKey)) newObj.SetActive(false);
+            cameraSelector.RecordCreation(newObj);
 
             SetAlert("Object duplicated!", "Info!", new Color(1, 0.5f, 0.25f));
         }
     }
 
-    void deleteObject()
+    public void deleteObject()
     {
+        if (!IsObjectEditable()) return;
         if (cameraSelector.selectedObject != null)
         {
-            GameObject toDestroy = cameraSelector.selectedObject;
-            GameObject toParent = null;
-            if (cameraSelector.selectedObject.transform.parent != null)
-                toParent = cameraSelector.selectedObject.transform.parent.gameObject;
-            else
-                cameraSelector.UnselectObject();
-            Destroy(toDestroy);
-            if (toParent != null)
-                cameraSelector.SelectObject(toParent);
+            cameraSelector.DeleteSelected();
             destroyedLastFrame = true;
             PlayAudio(destroyObject);
         }
@@ -665,7 +663,7 @@ public class EditorManager : MonoBehaviour
         }
     }
 
-    public GameObject createCube(bool createRigidbody = false, bool useGravity = true, Vector3? pos = null, string layer = "Default", string objName = "Cube", MaterialChoser.materialTypes matType = MaterialChoser.materialTypes.MasterShader)
+    public GameObject createCube(bool createRigidbody = false, bool useGravity = true, Vector3? pos = null, string layer = "Default", string objName = "Cube", MaterialChoser.materialTypes matType = MaterialChoser.materialTypes.MasterShader, bool recordHistory = true)
     {
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         cube.name = objName;
@@ -690,10 +688,11 @@ public class EditorManager : MonoBehaviour
 
         if (Input.GetKey(Plugin.altKey)) cube.SetActive(false);
 
+        if (recordHistory) cameraSelector.RecordCreation(cube);
         return cube;
     }
 
-    void createFloor(Vector3 scale)
+    public void createFloor(Vector3 scale)
     {
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         cube.transform.position = editorCamera.transform.position + editorCamera.transform.forward * 5f + Vector3.down * 1f;
@@ -711,6 +710,7 @@ public class EditorManager : MonoBehaviour
         }
         else
             cameraSelector.SelectObject(cube);
+        cameraSelector.RecordCreation(cube);
     }
 
     void ChangeCameraCullingLayers(int layerMask)
@@ -1959,7 +1959,7 @@ public class EditorManager : MonoBehaviour
                     objects.Add(o);
         }
 
-        GameObject group = createCube(pos: new Vector3(0.00f, 90.00f, 4.25f), layer: "Invisible", objName: $"Group of {n}", matType: MaterialChoser.materialTypes.NoCollision);
+        GameObject group = createCube(pos: new Vector3(0.00f, 90.00f, 4.25f), layer: "Invisible", objName: $"Group of {n}", matType: MaterialChoser.materialTypes.NoCollision, recordHistory: false);
         foreach (var o in objects)
         {
             o.transform.SetParent(group.transform, true);

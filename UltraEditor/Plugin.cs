@@ -14,8 +14,8 @@ using UnityEngine.SceneManagement;
 public class Plugin : BaseUnityPlugin
 {
     public const string GUID = "duviz.ultrakill.ultraeditor";
-    public const string Name = "UltraEditor";
-    public const string Version = "0.0.9";
+    public const string Name = "ReEdited";
+    public const string Version = "0.1.0";
 
     public static Plugin instance;
     public plog.Logger Log;
@@ -36,7 +36,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isToggleEnabledKeyPressed()
     {
-        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen) return false;
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen || EditorContextMenu.Visible) return false;
         if (Input.GetKey(altKey) && Input.GetKey(shiftKey) && Input.GetKeyDown(KeyCode.A))
         {
             return true;
@@ -46,7 +46,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isDuplicateKeyPressed()
     {
-        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen) return false;
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen || EditorContextMenu.Visible) return false;
         if (Input.GetKey(ctrlKey) && Input.GetKeyDown(KeyCode.D))
         {
             return true;
@@ -56,7 +56,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool isSelectPressed()
     {
-        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen) return false;
+        if (AssetsWindowManager.IsSearchFocused || EditorSettings.IsConfigOpen || EditorContextMenu.Visible) return false;
         if (Input.GetKey(altKey) && Input.GetKeyDown(KeyCode.S))
         {
             return true;
@@ -66,7 +66,7 @@ public class Plugin : BaseUnityPlugin
 
     public static bool canMove()
     {
-        return !EditorSettings.IsConfigOpen && !AssetsWindowManager.IsSearchFocused && !Input.GetKey(ctrlKey) && !Input.GetKey(altKey);
+        return !EditorContextMenu.Visible && !EditorSettings.IsConfigOpen && !AssetsWindowManager.IsSearchFocused && !Input.GetKey(ctrlKey) && !Input.GetKey(altKey);
     }
 
     public void Awake()
@@ -128,7 +128,7 @@ public class Plugin : BaseUnityPlugin
             ? $"{data}\n{stackTrace}"
             : data);
 
-        (instance.Log ??= new("ULTRAEDITOR"))?.Info(data.ToString(), stackTrace: stackTrace);
+        (instance.Log ??= new("REEDITED"))?.Info(data.ToString(), stackTrace: stackTrace);
     }
     public static void LogError(object data, string stackTrace = null)
     {
@@ -136,7 +136,7 @@ public class Plugin : BaseUnityPlugin
             ? $"{data}\n{stackTrace}"
             : data);
 
-        (instance.Log ??= new("ULTRAEDITOR"))?.Error(data.ToString(), stackTrace: stackTrace);
+        (instance.Log ??= new("REEDITED"))?.Error(data.ToString(), stackTrace: stackTrace);
     }
 
     public static Version GetVersion()

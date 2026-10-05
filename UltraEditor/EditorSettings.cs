@@ -17,6 +17,8 @@ public static class EditorSettings
     static ReEditedSettingsModule settings;
 
     public static bool IsConfigOpen => ClickGUI.Instance != null && ClickGUI.Instance.IsEnabled;
+    public static bool GridSnapping => settings?.GridSnapping.Value ?? false;
+    public static float GridSize => Bounded(settings?.GridSize.Value ?? 0.25f, 0.25f, 0.01f, 100f);
     public static float MovementSpeed => Bounded(settings?.MovementSpeed.Value ?? 30f, 30f, 1f, 200f);
     public static float LookMultiplier => Bounded(settings?.LookMultiplier.Value ?? 1f, 1f, 0.1f, 5f);
     public static float FastMovementMultiplier => Bounded(settings?.FastMovementMultiplier.Value ?? 3f, 3f, 1f, 10f);
@@ -37,7 +39,7 @@ public static class EditorSettings
 
     static bool IsPressed(string id, KeyCode fallback, bool held)
     {
-        if (IsConfigOpen || AssetsWindowManager.IsSearchFocused) return false;
+        if (IsConfigOpen || AssetsWindowManager.IsSearchFocused || EditorContextMenu.Visible) return false;
         Keybind binding = null;
         if (settings != null && settings.Keys.TryGetValue(id, out var setting)) binding = setting.Value;
         var key = binding?.Key ?? fallback;
@@ -57,6 +59,8 @@ public sealed class ReEditedSettingsModule : ThornClient.Core.Module
     public Setting<float> MovementSpeed { get; }
     public Setting<float> LookMultiplier { get; }
     public Setting<float> FastMovementMultiplier { get; }
+    public Setting<bool> GridSnapping { get; }
+    public Setting<float> GridSize { get; }
 
     public ReEditedSettingsModule() : base("mysticred.reedited.settings", "ReEdited",
         "Customize the level editor's controls and camera.", ModuleCategory.Utility, hasToggling: false)
@@ -70,6 +74,18 @@ public sealed class ReEditedSettingsModule : ThornClient.Core.Module
         BindKey(shortcuts, "toggle_ui", "Toggle editor UI", KeyCode.F9);
         BindKey(shortcuts, "delete_object", "Delete object", KeyCode.Delete);
         BindKey(shortcuts, "create_cube", "Create cube", KeyCode.KeypadPlus);
+        Keys.Add("undo", CreateSetting("undo", "Undo", "Undo the last object creation, duplication, deletion, or transform drag.",
+            new Keybind(KeyCode.Z, KeyCode.LeftControl), shortcuts));
+        Keys.Add("redo", CreateSetting("redo", "Redo", "Restore the last undone object edit.",
+            new Keybind(KeyCode.Y, KeyCode.LeftControl), shortcuts));
+
+        var building = CreateGroup("building", "Building tools", "Precision controls for moving objects.");
+        GridSnapping = CreateSetting("grid_snapping", "Grid snapping",
+            "Snap movement to the grid. Hold Ctrl to snap temporarily when disabled.", false, building);
+        GridSize = CreateSetting("grid_size", "Grid size",
+            "Spacing in world units. Global arrows snap the moved coordinate; local arrows snap distance along the arrow.",
+            0.25f, building);
+        GridSize.Hints = InterfaceHints.RangeHint(0.01f, 100f);
 
         var camera = CreateGroup("camera", "Editor camera", "Movement and mouse look while editing.");
         MovementSpeed = CreateSetting("movement_speed", "Movement speed", "Camera movement speed.", 30f, camera);
